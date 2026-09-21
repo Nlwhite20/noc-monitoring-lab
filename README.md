@@ -10,8 +10,10 @@ runbook documentation.
 
 The stack is deployed on a dedicated ARM64 Ubuntu VM: Prometheus, Node
 Exporter, Grafana and Uptime Kuma run under Docker Compose, and the dashboards
-are reachable only through an SSH tunnel. Still to do: a simulated outage with
-alert evidence and an incident report.
+are reachable only through an SSH tunnel. One simulated outage has been run
+and documented in [docs/incident-001-test-web-outage.md](docs/incident-001-test-web-outage.md)
+(detection and recovery verified in Uptime Kuma). Still to do: alert
+notifications, Prometheus alert rules, and the CPU and disk scenarios.
 
 ## Stack
 
