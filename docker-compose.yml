@@ -64,6 +64,15 @@ services:
     mem_limit: 512m
     cpus: 0.5
 
+  test-web:
+    image: nginx:1.28-alpine
+    container_name: noc-test-web
+    restart: unless-stopped
+    networks:
+      - noc-net
+    mem_limit: 64m
+    cpus: 0.25
+
 networks:
   noc-net:
     name: noc-net
