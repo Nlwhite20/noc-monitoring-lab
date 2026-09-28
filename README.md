@@ -15,6 +15,12 @@ and documented in [docs/incident-001-test-web-outage.md](docs/incident-001-test-
 (detection and recovery verified in Uptime Kuma). Still to do: alert
 notifications, Prometheus alert rules, and the CPU and disk scenarios.
 
+## GRC Documentation
+
+- [Control mapping](docs/control-mapping.md): how lab evidence supports NIST 800-53 and CSF 2.0 objectives
+- [Risk register](docs/risk-register.md): lab risks, existing controls and open treatments
+- [Incident report](docs/incident-001-test-web-outage.md): simulated outage with timeline and follow-ups
+
 ## Stack
 
 - Ubuntu Server ARM64 virtual machine in UTM
