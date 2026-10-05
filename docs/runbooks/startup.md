@@ -22,6 +22,7 @@ steps are reconnecting SSH and reopening the tunnel.
 | 2 | Terminal tab 1 (VM) | `ssh <user>@<LAB_VM_IP>` |
 | 3 | Terminal tab 1 (VM) | `cd ~/noc-monitoring-lab` (every `docker compose` command depends on this) |
 | 4 | Terminal tab 1 (VM) | `docker compose ps`: all five services `Up` (`uptime-kuma` also `healthy`). If any are missing, check them before starting anything. |
+| 4a | Terminal tab 1 (VM) | Clock check: `chronyc tracking \| grep "System time"` should show well under 1 second, and `date -u` should match the Mac. After the VM has been suspended it can be days behind (R-13); fix with `sudo chronyc makestep` (needs approval) before any timed work. |
 | 5 | Terminal tab 2 (tunnel) | `ssh -N -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 <user>@<LAB_VM_IP>`. It stays blank while the tunnel is open; leave it alone. |
 | 6 | Terminal tab 3 (Mac) | `cd ~/home-labs/repos/noc-monitoring-lab` for Git work |
 | 7 | Browser | Grafana at `http://localhost:3000`, Uptime Kuma at `http://localhost:3001` |
@@ -40,6 +41,7 @@ steps are reconnecting SSH and reopening the tunnel.
 | `localhost:3000` will not load | The tunnel tab closed (for example after a VM reboot). Run step 5 again. |
 | Tunnel says "Address already in use" | An old tunnel is still running. Close that tab or end the old `ssh` process. |
 | `no configuration file provided` | Run step 3. |
+| VM date is days behind the Mac | The VM was suspended and chrony is only slewing. `sudo chronyc makestep` (needs approval), then re-check with `chronyc tracking`. |
 
 ## Shutdown
 

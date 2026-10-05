@@ -10,7 +10,7 @@
 | Incident ID | INC-002 (simulated) |
 | Date | 2026-09-29 (all times UTC) |
 | Affected service | `node-exporter` (host metrics collector, Prometheus scrape target) |
-| Unaffected services | `prometheus`, `grafana`, `uptime-kuma`, `test-web` |
+| Other services (not targeted) | `prometheus`, `grafana`, `uptime-kuma`, `test-web`. Not stopped by the test. Only Prometheus was measured during the window (its self-scrape stayed at 1); the others were confirmed `running` only after recovery |
 | Detected by | Prometheus target health (`up{job="node-exporter"}` = 0), confirmed by query |
 | Planned interruption | 2 min 23 s (limit set before the test: 5 min) |
 | Severity (simulated) | Low: loss of host metrics only; no user-facing service affected |
@@ -168,9 +168,9 @@ query output above is the evidence for those phases.
 
 ## Observations
 
-- `node-exporter` exited with code 2 on `docker compose stop`, rather than the
-  0 or 143 usually seen from a clean stop. Recorded as an observation only;
-  the restart was unaffected.
+- `node-exporter` exited with code 2 after an operator-requested stop
+  (`docker compose stop`). The cause is unexplained: container logs were not
+  captured during the test. The restart was unaffected.
 - No tool sent a notification, as predicted.
 - Grafana and Uptime Kuma were not captured during the outage, so their
   behavior is not reported here. The Uptime Kuma "Node Exporter" monitor (60 s
@@ -194,6 +194,14 @@ moved to an `invalid/` folder rather than deleted. The fix was to move every
 step into a self-contained script that changes into the project folder itself
 ([scripts/incident-002/](../scripts/incident-002/)).
 
+A post-test review found further gaps in those scripts. Each one printed
+`exit=$?` directly after its Docker command, so the exit codes recorded above
+are genuine. But the scripts' own exit status came from `date` or `tee`, not
+Docker, and a failed Prometheus query, an unparseable response or a failed
+evidence write was not detected. Revised scripts with failure handling are in
+[scripts/incident-002/v2/](../scripts/incident-002/v2/). The originals are
+kept unchanged as the record of what ran.
+
 ## Findings
 
 | # | Finding | Risk | Follow-up |
@@ -204,8 +212,9 @@ step into a self-contained script that changes into the project folder itself
 
 ## Limitations
 
-- One planned, clean stop. Does not cover crashes, hangs, partial failures or
-  resource exhaustion.
+- One planned, operator-requested stop (`docker compose stop`); the container's
+  exit code 2 is unexplained. Does not cover crashes, hangs, partial failures
+  or resource exhaustion.
 - Detection was confirmed by manual polling. No automated alert exists yet.
 - No screenshots were taken during the outage or after recovery, so Grafana
   and Uptime Kuma behavior during the incident is unverified.
@@ -222,13 +231,18 @@ step into a self-contained script that changes into the project folder itself
 
 ## How to repeat
 
-On the lab VM, using [scripts/incident-002/](../scripts/incident-002/):
+On the lab VM, using the revised scripts in
+[scripts/incident-002/v2/](../scripts/incident-002/v2/) (the v1 scripts in the
+parent folder are historical and lack failure handling):
 
 1. `detect.sh baseline`: record the starting state.
 2. `stop.sh`: inject the failure (timestamps and exit code recorded).
 3. `detect.sh`: repeat until `node-exporter` shows 0.
 4. `restore.sh`: restart (timestamps and exit code recorded).
 5. `detect.sh recovery`: repeat until `node-exporter` shows 1.
+
+Stop at any non-zero exit code. `restore.sh` is the exception: run it
+regardless.
 
 ## Control mapping (evidence supports, not certifies)
 
