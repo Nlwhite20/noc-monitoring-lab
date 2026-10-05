@@ -11,8 +11,10 @@ stack and any monitored lab VMs.
 
 - Runs as a Docker Compose service on `noc-net`.
 - The Prometheus datasource is provisioned as code from
-  `configs/grafana/provisioning/`. The NOC Infrastructure Overview dashboard
-  was built in the UI; exporting its JSON into this repo is pending.
+  `configs/grafana/provisioning/`. Dashboards are built in the UI and exported
+  to `configs/grafana/dashboards/` (`noc-infrastructure-overview.json`, the
+  original, and `noc-host-overview.json`, the current NOC – Host Overview).
+  Provisioning dashboards from the repo is planned (R-12).
 - Published on port `3000`, bound to `127.0.0.1` on the VM — never `0.0.0.0`,
   never exposed publicly. Reach it from the Mac through an SSH tunnel.
 - Admin credentials come from a gitignored `.env`; only variable names are
@@ -43,6 +45,8 @@ stack and any monitored lab VMs.
 | Datasource test fails | Confirm URL is `http://prometheus:9090` (Compose service name), not `localhost` |
 | Dashboards missing/blank | Confirm the datasource test passes, the time range is Last 1 hour, and each panel uses the Prometheus datasource |
 | Alert not firing | Confirm the alert rule's query and threshold; confirm the notification channel is configured and tested |
+| Panel edit looks saved but is missing after reload or export | Save the dashboard, reload, then check the exported JSON. When changing visualization type, use the Visualizations tab, not Suggestions |
+| Browser Export / Copy to clipboard does nothing | Export through the API over the tunnel instead: `curl -fsS -u <grafana-user> http://localhost:3000/api/dashboards/uid/<uid>`, then save the `dashboard` object (curl prompts for the password) |
 
 ## Recovery and Rollback
 

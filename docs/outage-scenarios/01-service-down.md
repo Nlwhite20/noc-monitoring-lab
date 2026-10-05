@@ -1,7 +1,10 @@
 # Outage Scenario 1 — Simulated Service Down
 
-> Status: **Design document.** Describes a planned, safe simulation for a
-> future, separately approved execution phase. Not yet performed.
+> Status: **Exercised twice.** Run as INC-001 (`test-web`, detected by Uptime
+> Kuma) and INC-002 (`node-exporter`, detected by Prometheus). See
+> `docs/incident-001-test-web-outage.md` and
+> `docs/incident-002-node-exporter-outage.md`. The notification steps below
+> could not be verified because no notification channel exists yet (R-03).
 
 ## Purpose
 

@@ -1,13 +1,14 @@
 # NOC Monitoring Lab — Operations Guide
 
-> Status: **Operations guide** for the deployed stack. The outage scenarios in
-> `docs/outage-scenarios/` have not been executed yet.
+> Status: **Operations guide** for the deployed stack. Scenario 1 (service down)
+> has been exercised twice: INC-001 and INC-002. The CPU and disk scenarios have
+> not been run yet. For starting a session, see `docs/runbooks/startup.md`.
 
 ## 1. Verification
 
 Health is confirmed by:
 
-- `docker compose ps` — all four services `Up`/`healthy`
+- `docker compose ps` — all five services `Up` (`uptime-kuma` also `healthy`)
 - `curl` each service's health endpoint from inside the VM
 - Open an SSH tunnel from the Mac
   (`ssh -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 <user>@<LAB_VM_IP>`),
