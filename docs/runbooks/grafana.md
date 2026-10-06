@@ -40,9 +40,12 @@ stack and any monitored lab VMs.
   grouped by `alertname`, `grafana_folder`, `job`; group wait 30 s, group
   interval 5 min, repeat 4 h.
 - Observed in INC-003: a Firing message about 2 to 2.5 min after a target
-  stopped, then a Resolved message after recovery. The policy route itself has
-  not yet delivered a live alert (the rule used direct contact-point routing
-  during INC-003).
+  stopped, then a Resolved message after recovery (direct contact-point
+  routing at the time). After switching to the policy, INC-003c run 3
+  delivered a Resolved message about 3 min after recovery, titled
+  `[RESOLVED] TargetDown NOC node-exporter (...)`, grouped by `job`.
+- For a valid test, the outage must last longer than the 1-minute pending
+  period plus group wait (about 2.5 min); use a time-based automatic restore.
 - A clock step on the VM can produce a false NoData alert (R-13).
 
 ## Troubleshooting Runbook

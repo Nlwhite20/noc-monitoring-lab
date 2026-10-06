@@ -13,7 +13,7 @@
 | Targets | `node-exporter` (INC-003, INC-003b); `test-web` (INC-003-kuma) |
 | Alert paths | Grafana alerting → Discord; Uptime Kuma → Discord |
 | Scripts | v2 scripts ([scripts/incident-002/v2/](../scripts/incident-002/v2/)), first live use of `stop.sh` and `restore.sh` |
-| Outcome | Grafana and Uptime Kuma both delivered alerts. One Kuma "Down" was missed once (cause unknown). The notification-policy route is configured but has not yet delivered a live alert |
+| Outcome | Grafana and Uptime Kuma both delivered alerts. The notification-policy route delivered a Resolved message grouped by `job` (Follow-up 3); its Firing message was not confirmed. One Kuma "Down" was missed once (cause unknown) |
 
 ## Purpose
 
@@ -140,7 +140,7 @@ Before this run the rule was switched to use the notification policy, through
 Grafana's provisioning API because the Grafana UI kept failing to load the
 editor. The re-exported rule no longer contains `notification_settings`.
 
-| Event | Time (UTC) |
+| Event | VM clock (UTC), about 6.5 h slow; see correction below |
 | --- | --- |
 | Baseline, both targets up | 18:15:33 |
 | Stop (`exit=0`) | 18:16:22 |
@@ -152,23 +152,87 @@ editor. The re-exported rule no longer contains `notification_settings`.
   was a one-off. Its cause is unknown.
 - **No Grafana message was expected or received.** The restart came 68 s
   after the stop, before the 1-minute pending period could complete. The
-  notification-policy route therefore remains **configured but untested**.
+  notification-policy route therefore remained untested after this run.
+
+**Correction (2026-10-06):** the times in this table come from the VM clock,
+which was about 6.5 hours behind real time during this run. Discord's own
+header time on the Node Exporter Down message reads 8:49 PM EDT (00:49 UTC),
+while the message body, stamped by the VM, reads 14:16:59 EDT. The next clock
+check, at 01:33 UTC, found the VM 6 h 29 min behind. The baseline for this
+run skipped the VM-to-Mac clock comparison because the Mac's time line was
+missing from the output, and the run went ahead anyway. Durations measured on
+the VM's own clock (37 s to the Kuma message, 68 s to the restart) are still
+valid; the absolute times are not.
+
+## Follow-up 3: notification-policy route verification (INC-003c)
+
+Run on 2026-10-06 under a separately reviewed plan. All times are real UTC,
+checked before the test by comparing the VM and Mac clocks directly.
+
+### Pre-checks (read-only)
+
+| Check | Result |
+| --- | --- |
+| VM vs Mac clock | VM 6 h 29 min behind (fourth R-13 occurrence). Corrected with an approved `sudo chronyc burst 4/4` then `makestep`; re-check showed 0 s |
+| Rule (provisioning API) | `TargetDown`, `for: 1m`, no data and errors alert, not paused, condition below 1, **no `notification_settings`** (uses the policy) |
+| Policy | Receiver `discord-noc`; group by `grafana_folder`, `alertname`, `job`; 30 s / 5 min / 4 h; no child routes |
+| Contact points (names and types only) | `discord-noc` (discord) |
+| Active alerts / rule state | None / both instances Normal. No alert from the clock step was active or delivered |
+
+### Attempts
+
+| Run | Stop (UTC) | Restart (UTC) | Outage | What happened |
+| --- | --- | --- | --- | --- |
+| 1 | 01:45:36 | 01:46:40 | 64 s | Restored manually after the Kuma Down message (delivered 01:45:41, 5 s after the stop). Too short for Grafana's 1-minute pending period, so no Grafana message |
+| 2 | 01:54:24 | 01:54:39 | 15 s | A backup restore command pasted into a second terminal ran immediately (macOS Terminal sends the pasted newline), shorter than one scrape interval. The scheduled restore at 01:58:24 recorded a no-op |
+| 3 | 02:02:14 | 02:06:14 | 240 s | Automatic, time-based restore in one command (stop, wait 240 s, restore), so no person had to pick the right alert under time pressure. Both scripts exit 0 |
+
+Runs 1 and 2 are kept as recorded; their raw evidence is in separate folders.
+
+### Run 3 result
+
+| Message | Arrival (Discord header) |
+| --- | --- |
+| Grafana **Resolved**, `TargetDown`, `job=node-exporter` only | 22:09 EDT (02:09 UTC) |
+| Uptime Kuma "Node Exporter is up" (downtime 4 min, went offline 02:02 UTC) | 22:06 EDT (02:06 UTC) |
+| Grafana **Firing** | Not confirmed (see below) |
+| Uptime Kuma "Node Exporter went down" | Not confirmed (see below) |
+
+The Resolved message title was
+`[RESOLVED] TargetDown NOC node-exporter (node-exporter:9100 warning)`.
+The grouping labels in the title (`TargetDown NOC node-exporter`, that is
+alertname, folder and job) match the notification policy's `group_by`, and
+the message carried only the `node-exporter` alert. In INC-003, sent by direct
+contact-point routing, the title was `[FIRING:1, RESOLVED:1] TargetDown NOC
+(warning)` and mixed two jobs. **This shows the notification-policy route
+delivering, grouped by `job` as configured.**
+
+The operator reported only the two messages above from the run 3 window. A
+Firing message is expected before any Resolved message, because Alertmanager
+does not send a Resolved notification for a group that never notified, but
+its arrival was not confirmed and it is not claimed here. Whether Kuma's Down
+message for run 3 arrived is also unconfirmed. Scrape-level evidence for run 3
+is in the raw evidence on the VM and was not summarized for this report.
 
 ## Findings
 
 | # | Finding | Risk | Follow-up |
 | --- | --- | --- | --- |
 | F-1 | Alert delivery now works: Grafana and Uptime Kuma both notified a person through Discord | R-03 | Mark R-03 as partially mitigated |
-| F-2 | The rule bypassed the notification policy (direct contact-point routing), which caused two targets to be grouped into one message. Found only by exporting the rule | R-12 | Switched to the policy via the API; prove it with a run that lasts past the pending period |
-| F-3 | One Uptime Kuma Down notification was lost (INC-003), cause unknown. Two later Down notifications arrived | R-03 | Watch for a repeat; a missed Down is the failure that matters most |
+| F-2 | The rule bypassed the notification policy (direct contact-point routing), which caused two targets to be grouped into one message. Found only by exporting the rule | R-12 | Switched to the policy via the API; Follow-up 3 shows the policy route delivering a Resolved message grouped by `job` |
+| F-3 | One Uptime Kuma Down notification was lost (INC-003), cause unknown. Later Down notifications arrived (Kuma retest, INC-003b, INC-003c run 1); run 3's was not confirmed | R-03 | Watch for a repeat; a missed Down is the failure that matters most |
 | F-4 | A clock correction produced a false NoData alert inside Grafana (not delivered). With no-data set to alert, clock steps are a source of noise | R-13 | Keep no-data alerting for now; reduce clock steps with the planned chrony change |
 | F-5 | After a suspend, `chronyc tracking` reports a stale, near-zero offset and `makestep` alone does nothing. Only a direct comparison with the Mac caught a 67-minute error | R-13 | Startup runbook updated: compare clocks directly; fix with `burst`, then `makestep` |
 | F-6 | Uptime Kuma messages mix time zones: "Went Offline" in UTC, "Time" in New York time | — | Note when reading alerts |
+| F-8 | INC-003b ran with the VM clock about 6.5 h slow because a missing clock-check line was treated as a pass. Exposed by Discord's server-side timestamps | R-13 | Never start a timed test without both clock readings; absolute times in Follow-up 2 corrected |
+| F-9 | Two policy-route attempts were cut short by the operator procedure: restoring on the faster Kuma alert, and a pasted backup command auto-running | R-11 | Use a single automatic stop-wait-restore command; never paste into the backup terminal |
+| F-10 | The VM reports 27 pending updates and "System restart required" | R-05 | Patch and reboot in a planned window, then re-verify the stack |
 | F-7 | Grafana 12 shows "Loading OnCall integration failed" on alerting pages because the bundled OnCall plugin has no backend. No effect on alerting | — | Ignore, or disable the plugin later |
 
 ## Limitations
 
-- The Grafana notification-policy route has not delivered a live alert yet.
+- The notification-policy route is shown delivering a Resolved message; its
+  Firing message in the same run was not confirmed.
 - Discord shows message times to the minute; seconds were not captured for
   Grafana's messages, and the Grafana "Resolved" time was not recorded.
 - No screenshots were captured of the Discord messages or Grafana during these

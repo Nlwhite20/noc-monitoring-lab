@@ -26,8 +26,9 @@ Two simulated outages have been run and documented:
   outage was repeated and the alerts arrived without anyone watching a
   dashboard.
 
-Still to do: prove the Grafana notification-policy route with a live alert,
-host-level network metrics, and the CPU and disk scenarios.
+Still to do: confirm a Firing message through the notification policy, fix
+the VM clock drift after suspends, patch the VM, host-level network metrics,
+and the CPU and disk scenarios.
 
 ## GRC Documentation
 

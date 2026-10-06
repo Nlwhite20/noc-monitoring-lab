@@ -25,7 +25,7 @@ data, employer systems or third-party networks.
 | SC-7 Boundary Protection | Limit network exposure | Grafana and Uptime Kuma publish only on the VM loopback address and are reached through an SSH tunnel. Prometheus and Node Exporter publish no host ports. UTM Shared Network only, no bridged adapter. | `docker-compose.yml` (127.0.0.1 binds); `docker ps` port column checked 2026-09-21; `docs/network-architecture.md` (diagram) | Implemented |
 | SC-6 Resource Availability | Prevent one service exhausting the host | Per-container memory and CPU limits set for every service. | `docker-compose.yml` (`mem_limit`, `cpus`) | Implemented |
 | SI-4 System Monitoring | Detect abnormal or failed services | Prometheus scrapes itself and Node Exporter every 30 s; Uptime Kuma checks Prometheus, Grafana, Node Exporter and Test Web. | `configs/prometheus/prometheus.yml`; `configs/grafana/dashboards/` (both dashboards); `docs/incident-002-node-exporter-outage.md` (target loss detected within one scrape); `screenshots/` | Implemented |
-| IR-4 Incident Handling | Detect, respond, recover, document | Three simulated outage exercises: INC-001 (Uptime Kuma detection), INC-002 (Prometheus detection, timestamped evidence) and INC-003 (alerts delivered to a person through Discord, v2 scripts). All recovered and written up | `docs/incident-001-test-web-outage.md`; `docs/incident-002-node-exporter-outage.md`; `docs/incident-003-alerting-validation.md`; `scripts/incident-002/`; `configs/grafana/alerting/` | Implemented (notification-policy route not yet proven live) |
+| IR-4 Incident Handling | Detect, respond, recover, document | Three simulated outage exercises: INC-001 (Uptime Kuma detection), INC-002 (Prometheus detection, timestamped evidence) and INC-003 (alerts delivered to a person through Discord, v2 scripts). All recovered and written up | `docs/incident-001-test-web-outage.md`; `docs/incident-002-node-exporter-outage.md`; `docs/incident-003-alerting-validation.md`; `scripts/incident-002/`; `configs/grafana/alerting/` | Implemented (policy route shown delivering a Resolved message; Firing not confirmed) |
 | IR-5 Incident Monitoring | Track and record incidents | Kuma heartbeat and event history retained across a VM reboot. | `docs/incident-001-test-web-outage.md` | Partial (informal) |
 | IA-5 Authenticator Management | Protect credentials | Grafana admin credentials live in a VM-local `.env` that is git-ignored; only a placeholder `.env.example` is committed. Self sign-up disabled in Grafana. | `.gitignore`; `.env.example`; `docker-compose.yml` | Partial (no rotation policy, single admin, no MFA) |
 | CM-2 Baseline Configuration | Known, reproducible configuration | Container images pinned to explicit versions; stack defined entirely in `docker-compose.yml` and provisioning files. | `docker-compose.yml`; `configs/` | Implemented |
@@ -48,8 +48,9 @@ data, employer systems or third-party networks.
    saved to `evidence/`. Capture and commit it (with no addresses beyond
    loopback) to back up the SC-7 claim.
 2. Alert notifications were first delivered in INC-003 (Grafana and Uptime
-   Kuma to Discord). The Grafana notification-policy route has not yet
-   delivered a live alert, and one Kuma Down message was missed.
+   Kuma to Discord). The notification-policy route delivered a Resolved
+   message in INC-003c; its Firing message was not confirmed, and one Kuma
+   Down message was missed.
 3. Backup restore has not been tested.
 4. The post-reboot check (CP-10) and the VM clone (CP-9) are not yet recorded in
    the repo or in the foundation repo's VM inventory.
