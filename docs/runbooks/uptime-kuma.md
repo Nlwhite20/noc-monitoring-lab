@@ -1,6 +1,6 @@
 # Runbook — Uptime Kuma
 
-> Status: **Runbook** for the deployed stack. A notification channel has not yet been verified.
+> Status: **Runbook** for the deployed stack. Discord notification `discord-noc` configured and verified 2026-10-05 (see INC-003).
 
 ## Purpose
 
@@ -29,6 +29,12 @@ separate from the Prometheus/Grafana metrics path.
   retries; configured notification channel(s) fire.
 - Transitions back to **Up** on the next successful check, with a recovery
   notification if configured.
+- Configured: Discord notification `discord-noc`, enabled by default and on
+  all monitors (webhook URL is a secret, kept only in the Kuma data volume).
+- Observed: Down and Up messages delivered for Test Web and Node Exporter.
+  One Node Exporter Down message was not delivered during INC-003 (cause
+  unknown); the Up message was. Kuma does not log notification attempts.
+- Messages mix time zones: "Went Offline" is in UTC, "Time" in New York time.
 
 ## Troubleshooting Runbook
 
@@ -37,7 +43,7 @@ separate from the Prometheus/Grafana metrics path.
 | Can't reach UI from Mac | Confirm the SSH tunnel is open and the VM's DHCP address has not changed; `ss -ltn` on the VM should show `127.0.0.1:3001` |
 | Check flapping | Confirm the target service is actually stable; check interval/retry settings aren't too aggressive for the service's real response time |
 | Check stuck "Pending" | `docker compose logs uptime-kuma`; confirm the target hostname/port is correct and reachable on `noc-net` |
-| Notifications not firing | Verify the notification channel config/test inside Uptime Kuma's settings |
+| Notifications not firing | Verify the notification channel config/test inside Uptime Kuma's settings; on the monitor's Edit page, confirm the notification is ticked; compare the monitor's event history with what arrived in Discord |
 
 ## Recovery and Rollback
 

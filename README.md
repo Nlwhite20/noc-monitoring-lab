@@ -21,14 +21,19 @@ Two simulated outages have been run and documented:
   detected by Prometheus within one 30 s scrape, recovered in a planned
   2 min 23 s window, with timestamped evidence.
 
-Still to do: alert rules and a notification channel (no alert has ever been
-delivered), host-level network metrics, and the CPU and disk scenarios.
+- [INC-003](docs/incident-003-alerting-validation.md): alerts delivered to a
+  person. Grafana and Uptime Kuma now notify a private Discord channel; the
+  outage was repeated and the alerts arrived without anyone watching a
+  dashboard.
+
+Still to do: prove the Grafana notification-policy route with a live alert,
+host-level network metrics, and the CPU and disk scenarios.
 
 ## GRC Documentation
 
 - [Control mapping](docs/control-mapping.md): how lab evidence supports NIST 800-53 and CSF 2.0 objectives
 - [Risk register](docs/risk-register.md): lab risks, existing controls and open treatments
-- Incident reports: [INC-001](docs/incident-001-test-web-outage.md) (Uptime Kuma) and [INC-002](docs/incident-002-node-exporter-outage.md) (Prometheus), each with timeline, evidence and follow-ups
+- Incident reports: [INC-001](docs/incident-001-test-web-outage.md) (Uptime Kuma), [INC-002](docs/incident-002-node-exporter-outage.md) (Prometheus) and [INC-003](docs/incident-003-alerting-validation.md) (alert delivery), each with timeline, evidence and follow-ups
 - [Runbooks](docs/runbooks/): per-service runbooks plus a [session startup runbook](docs/runbooks/startup.md)
 
 ## AI Collaboration and Human Validation

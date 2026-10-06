@@ -58,5 +58,7 @@ Live check (read-only `detect.sh baseline`, 2026-10-05): passed with exit 0;
 container state and all three queries were saved and verified. Its evidence
 files are stamped 2026-09-30T03:24Z because the VM clock was about 5 days 10
 hours behind at the time (see risk R-13); the clock was corrected immediately
-afterwards. `stop.sh` and `restore.sh` have not been run against the live
-stack.
+afterwards. `stop.sh` and `restore.sh` were first run against the live stack
+in [INC-003](../../docs/incident-003-alerting-validation.md) (three stops and
+restores, all exit 0, including one run against `test-web` using the
+`SERVICE`/`CONTAINER` overrides).
